@@ -1,0 +1,107 @@
+name: build
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux (AppImage + deb)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            libsoup-3.0-dev libgtk-3-dev libayatana-appindicator3-dev
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: pnpm build
+
+      - name: CLI smoke test
+        run: cargo run --manifest-path src-tauri/Cargo.toml -- --check
+
+      - name: Build bundles
+        run: cargo tauri build --bundles appimage,deb
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aniwall-linux
+          if-no-files-found: error
+          path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb
+
+  arch:
+    name: Arch (PKGBUILD)
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Prepare toolchain
+        run: |
+          pacman -Syu --noconfirm --needed git nodejs pnpm cargo rust \
+            webkit2gtk-4.1 gtk3 librsvg libsoup3 curl libarchive qt6-tools polkit
+          useradd -m builder
+
+      - uses: actions/checkout@v4
+
+      - name: Build pacman package
+        run: |
+          chown -R builder:builder .
+          su builder -c "makepkg -s --noconfirm --nocheck"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: aniwall-pkg
+          if-no-files-found: warn
+          path: "*.pkg.tar.zst"
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, arch]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/*.AppImage
+            artifacts/*.deb
+            artifacts/*.pkg.tar.zst
+          generate_release_notes: true

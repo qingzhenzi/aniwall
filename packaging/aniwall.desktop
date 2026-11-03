@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=AniWall
+Name[zh_CN]=AniWall 动态壁纸
+Comment=KDE dynamic wallpaper manager
+Comment[zh_CN]=KDE 动态壁纸管理器（下载 / 管理 / 一键切换）
+Exec=aniwall
+TryExec=aniwall
+Icon=aniwall
+Terminal=false
+Categories=Utility;Settings;
+Keywords=wallpaper;video;anime;kde;plasma;

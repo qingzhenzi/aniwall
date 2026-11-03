@@ -1,0 +1,29 @@
+[package]
+name = "aniwall"
+version = "0.1.0"
+description = "AniWall — KDE 动态壁纸管理器：下载 / 管理 / 一键切换"
+authors = ["AniWall contributors"]
+edition = "2021"
+rust-version = "1.77"
+license = "MIT"
+
+[lib]
+name = "aniwall_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+dirs = "6"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
