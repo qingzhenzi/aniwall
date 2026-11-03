@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import TopBar from "./components/TopBar.vue";
 import TabNav from "./components/TabNav.vue";
@@ -11,8 +11,11 @@ import AboutView from "./components/AboutView.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
 import ToastHost from "./components/ToastHost.vue";
 import { importPaths, init, state } from "./store";
+import { applyTheme } from "./theme";
 
 const dragging = ref(false);
+
+watch(() => state.settings?.theme, applyTheme, { immediate: true });
 
 onMounted(async () => {
   await init();

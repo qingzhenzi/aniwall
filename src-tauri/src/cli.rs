@@ -13,6 +13,7 @@ AniWall — KDE 动态壁纸管理器
   aniwall --next                切换到下一张壁纸
   aniwall --restore             恢复静态壁纸
   aniwall --settings            打印当前播放设置 JSON
+  aniwall --apply-settings      把 settings.json 里的设置重新应用到当前壁纸
   aniwall --rename <id> <标题>  修改壁纸标题
   aniwall --selftest            后端自检（设置读写、壁纸库、桌面集成）
   aniwall --autostart on|off|status   开机自启开关
@@ -214,6 +215,9 @@ pub fn maybe_run() -> Option<i32> {
         "--next" | "next" => Some(report(crate::next_wallpaper_impl())),
         "--restore" | "restore" => Some(report(crate::restore_impl())),
         "--autostart" | "autostart" => Some(autostart_command(&args)),
+        "--apply-settings" | "apply-settings" => {
+            Some(report(crate::save_settings_impl(library::read_settings())))
+        }
         "--settings" | "settings" => {
             match serde_json::to_string_pretty(&library::read_settings()) {
                 Ok(json) => {

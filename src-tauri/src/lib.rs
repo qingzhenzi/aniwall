@@ -337,15 +337,31 @@ fn read_settings() -> Settings {
     library::read_settings()
 }
 
+pub fn save_settings_impl(settings: Settings) -> Result<String, String> {
+    library::write_settings(&settings)?;
+
+    let target = if settings.active_id.is_empty() {
+        None
+    } else {
+        library::load()
+            .into_iter()
+            .find(|w| w.id == settings.active_id)
+            .map(|w| w.path)
+    };
+    let target = target.or_else(plasma::current_video_path);
+
+    match target {
+        Some(path) if std::path::Path::new(&path).exists() => {
+            plasma::set_video(std::path::Path::new(&path), &settings)?;
+            Ok("设置已保存并应用到当前壁纸".into())
+        }
+        _ => Ok("设置已保存（当前没有动态壁纸需要立即应用）".into()),
+    }
+}
+
 #[tauri::command]
 fn save_settings(settings: Settings) -> Result<String, String> {
-    library::write_settings(&settings)?;
-    if !settings.active_id.is_empty() {
-        if let Some(item) = library::load().into_iter().find(|w| w.id == settings.active_id) {
-            let _ = plasma::set_video(std::path::Path::new(&item.path), &settings);
-        }
-    }
-    Ok("设置已保存".into())
+    save_settings_impl(settings)
 }
 
 #[tauri::command]

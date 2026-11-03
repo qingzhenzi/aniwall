@@ -11,6 +11,7 @@ import type {
   Wallpaper,
 } from "./types";
 import { pushToast } from "./toast";
+import { applyTheme } from "./theme";
 
 export const state = reactive({
   ready: false,
@@ -164,6 +165,7 @@ export async function saveSettings(next: Settings): Promise<boolean> {
   try {
     await invoke<string>("save_settings", { settings: next });
     state.settings = next;
+    applyTheme(next.theme);
     pushToast("设置已保存", "ok");
     await refreshCurrent();
     return true;

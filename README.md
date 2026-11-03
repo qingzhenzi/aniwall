@@ -29,12 +29,16 @@
   独立一行进度，可随时切到别的页面，支持逐条移除 / 清空已完成 / 清空全部。
 - **一键切换**：通过 `qdbus6` 调用 PlasmaShell 脚本，把视频写入
   `Smart Video Wallpaper Reborn` 的配置，所有屏幕 / 桌面同时生效。
-- **播放设置**：裁剪填充 / 静音 / 最大化时暂停 / 电量阈值暂停 / 循环播放。
+- **播放设置**：填充（拉伸 / 适应比例 / 裁剪填充，与插件 VideoOutput 枚举严格对应）、
+  静音模式（0/1/2/4/5 全量）、音量、音频输出设备、暂停策略、电量阈值暂停、循环播放、界面主题
+  （跟随系统 / 浅色 / 深色）。保存后**一定会应用**到当前正在播放的壁纸（即使库里的 active_id 失效，
+  也会从 Plasma 配置里解析当前视频重新写入）。
 - **初始化与自诊**：检测发行版、会话类型、Plasma 版本、插件与依赖（yt-dlp / ffmpeg / qdbus6 / curl / bsdtar），
   可一键安装插件、用 `pkexec pacman` 补齐依赖、创建桌面快捷方式。
 - **CLI**：`aniwall --check`（环境诊断 JSON）、`--list`、`--set <id|文件路径>`、`--random`、`--next`、
-  `--restore`、`--settings`、`--rename <id> <标题>`、`--selftest`（后端自检）、
-  `--autostart on|off|status`、`--minimized`（开机自启时静默到托盘）。
+  `--restore`、`--settings`、`--apply-settings`（把 settings.json 重放到当前壁纸）、
+  `--rename <id> <标题>`、`--selftest`（后端自检）、`--autostart on|off|status`、
+  `--minimized`（开机自启时静默到托盘）。
 
 ---
 

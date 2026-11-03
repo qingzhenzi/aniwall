@@ -46,6 +46,15 @@ pub struct Settings {
     pub active_id: String,
     #[serde(default = "d_true")]
     pub loop_playback: bool,
+    /// 音量 0..1（插件 Volume）
+    #[serde(default = "d_volume")]
+    pub volume: f64,
+    /// 音频输出设备 id（留空为系统默认）
+    #[serde(default)]
+    pub audio_device: String,
+    /// 界面主题：system / light / dark
+    #[serde(default = "d_theme")]
+    pub theme: String,
 }
 
 fn d_fill() -> i32 {
@@ -63,6 +72,12 @@ fn d_battery() -> i32 {
 fn d_true() -> bool {
     true
 }
+fn d_volume() -> f64 {
+    1.0
+}
+fn d_theme() -> String {
+    "system".to_string()
+}
 
 impl Default for Settings {
     fn default() -> Self {
@@ -76,6 +91,9 @@ impl Default for Settings {
             cookie_file: String::new(),
             active_id: String::new(),
             loop_playback: true,
+            volume: 1.0,
+            audio_device: String::new(),
+            theme: "system".into(),
         }
     }
 }

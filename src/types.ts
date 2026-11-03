@@ -53,6 +53,9 @@ export interface Settings {
   cookie_file: string;
   active_id: string;
   loop_playback: boolean;
+  volume: number;
+  audio_device: string;
+  theme: "system" | "light" | "dark";
 }
 
 export interface DesktopWallpaperState {

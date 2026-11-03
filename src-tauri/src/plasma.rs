@@ -69,6 +69,8 @@ for (var i = 0; i < ds.length; i++) {{
   d.writeConfig('BatteryPausesVideo', {battery});
   d.writeConfig('PauseBatteryLevel', {level});
   d.writeConfig('ResumeLastVideo', {resume});
+  d.writeConfig('Volume', {volume});
+  d.writeConfig('AudioOutputDevice', '{audio}');
 }}
 print('ok:' + ds.length);
 "#,
@@ -80,6 +82,8 @@ print('ok:' + ds.length);
         battery = if s.battery_pauses { "true" } else { "false" },
         level = s.battery_level,
         resume = if s.resume_last { "true" } else { "false" },
+        volume = s.volume.clamp(0.0, 1.0),
+        audio = s.audio_device.replace('\'', ""),
     );
 
     let out = evaluate(&script)?;
@@ -87,6 +91,50 @@ print('ok:' + ds.length);
         return Err(format!("Plasma 返回异常：{out}"));
     }
     Ok(out)
+}
+
+fn percent_decode(input: &str) -> String {
+    let bytes = input.as_bytes();
+    let mut out: Vec<u8> = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            let hex = |b: u8| -> Option<u8> {
+                match b {
+                    b'0'..=b'9' => Some(b - b'0'),
+                    b'a'..=b'f' => Some(b - b'a' + 10),
+                    b'A'..=b'F' => Some(b - b'A' + 10),
+                    _ => None,
+                }
+            };
+            if let (Some(hi), Some(lo)) = (hex(bytes[i + 1]), hex(bytes[i + 2])) {
+                out.push(hi * 16 + lo);
+                i += 3;
+                continue;
+            }
+        }
+        out.push(bytes[i]);
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).to_string()
+}
+
+/// 当前桌面正在播放的视频文件路径（从 Plasma 配置里解析）。
+pub fn current_video_path() -> Option<String> {
+    let state = current();
+    let entries = state.as_array()?;
+    for entry in entries {
+        let videos = entry.get("videos")?.as_str()?;
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(videos).ok()?;
+        if let Some(first) = parsed.first() {
+            if let Some(uri) = first.get("filename").and_then(|v| v.as_str()) {
+                if let Some(rest) = uri.strip_prefix("file://") {
+                    return Some(percent_decode(rest));
+                }
+            }
+        }
+    }
+    None
 }
 
 /// 读取当前每个桌面的壁纸插件与视频配置。

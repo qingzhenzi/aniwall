@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { loadAutostart, saveSettings, setAutostart, state } from "../store";
 import type { Settings } from "../types";
+import {
+  FILL_OPTIONS,
+  MUTE_OPTIONS,
+  PAUSE_OPTIONS,
+  THEME_OPTIONS,
+} from "../settings-options";
 
 const form = reactive<Settings>({
   fill_mode: 2,
@@ -13,6 +19,9 @@ const form = reactive<Settings>({
   cookie_file: "",
   active_id: "",
   loop_playback: true,
+  volume: 1,
+  audio_device: "",
+  theme: "system",
 });
 
 watch(
@@ -33,6 +42,13 @@ watch(
   }
 );
 
+const volumePercent = computed({
+  get: () => Math.round((form.volume ?? 1) * 100),
+  set: (value: number) => {
+    form.volume = Math.max(0, Math.min(100, value)) / 100;
+  },
+});
+
 onMounted(() => {
   void loadAutostart();
 });
@@ -47,7 +63,6 @@ async function save() {
 }
 
 async function toggleAutostart() {
-  // v-model 已经把勾选状态改成新值，这里直接同步给后端
   autostart.value = await setAutostart(autostart.value);
 }
 </script>
@@ -57,7 +72,7 @@ async function toggleAutostart() {
     <div class="section-head">
       <div>
         <h2>播放设置</h2>
-        <p>保存后会同步给当前已应用的壁纸；其它选项即时生效。</p>
+        <p>点「保存设置」后会立刻应用到当前桌面壁纸（如果正在播放视频壁纸）。</p>
       </div>
       <div class="actions">
         <button class="primary" :disabled="saving" @click="save">保存设置</button>
@@ -65,6 +80,16 @@ async function toggleAutostart() {
     </div>
 
     <div class="form">
+      <label class="field">
+        <span>界面主题</span>
+        <select v-model="form.theme">
+          <option v-for="option in THEME_OPTIONS" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+        <span class="hint">「跟随系统」会随 KDE 的浅色 / 深色自动切换</span>
+      </label>
+
       <label class="field">
         <span>开机自启</span>
         <div class="inline">
@@ -74,38 +99,47 @@ async function toggleAutostart() {
         <span class="hint">写入 ~/.config/autostart/aniwall.desktop（带 --minimized 参数）</span>
       </label>
 
-      <div class="field">
-        <span>托盘与窗口</span>
-        <div class="inline">
-          <span class="muted">关闭窗口 = 最小化到托盘；托盘左键显示/隐藏，托盘菜单可随机换、退出</span>
-        </div>
-      </div>
-
       <label class="field">
         <span>填充模式</span>
         <select v-model.number="form.fill_mode">
-          <option :value="2">裁剪填充（推荐）</option>
-          <option :value="1">拉伸铺满</option>
-          <option :value="0">适应比例</option>
+          <option v-for="option in FILL_OPTIONS" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
         </select>
+        <span class="hint">对应插件 Positioning：0=拉伸 1=适应比例 2=裁剪填充</span>
       </label>
 
       <label class="field">
-        <span>音频</span>
+        <span>音频 / 静音模式</span>
         <select v-model.number="form.mute_mode">
-          <option :value="5">始终静音（推荐）</option>
-          <option :value="4">从不静音</option>
-          <option :value="2">有窗口时静音</option>
+          <option v-for="option in MUTE_OPTIONS" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
         </select>
+        <span class="hint">
+          默认「始终静音」。想在插件自己的设置里用音频输出设备，要先把这里改成「从不静音」，
+          否则设备选了也不会有声音。
+        </span>
+      </label>
+
+      <label class="field">
+        <span>音量（{{ volumePercent }}%）</span>
+        <input v-model.number="volumePercent" type="range" min="0" max="100" step="5" class="range" />
+        <span class="hint">仅在「从不静音 / 部分静音模式」下生效</span>
+      </label>
+
+      <label class="field">
+        <span>音频输出设备（可选）</span>
+        <input v-model="form.audio_device" type="text" placeholder="留空 = 系统默认；填插件设置里显示的设备 ID" />
+        <span class="hint">插件设置 → 音频设备 里能看到设备 ID</span>
       </label>
 
       <label class="field">
         <span>暂停策略</span>
         <select v-model.number="form.pause_mode">
-          <option :value="0">有最大化 / 全屏窗口时暂停（推荐）</option>
-          <option :value="1">当前窗口活跃时暂停</option>
-          <option :value="2">有任何窗口时暂停</option>
-          <option :value="3">从不暂停</option>
+          <option v-for="option in PAUSE_OPTIONS" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
         </select>
       </label>
 
