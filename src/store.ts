@@ -7,12 +7,14 @@ import type {
   DownloadItem,
   EnvStatus,
   Settings,
+  TabKey,
   Wallpaper,
 } from "./types";
 import { pushToast } from "./toast";
 
 export const state = reactive({
   ready: false,
+  tab: "library" as TabKey,
   env: null as EnvStatus | null,
   appInfo: null as AppInfo | null,
   autostart: false,
@@ -100,6 +102,42 @@ export async function setAutostart(enabled: boolean): Promise<boolean> {
 
 export async function loadAppInfo() {
   state.appInfo = await call<AppInfo>("app_info", {}, "读取应用信息");
+}
+
+/* ---------- 自定义确认弹窗（替代 window.confirm） ---------- */
+
+export const confirmState = reactive({
+  open: false,
+  title: "请确认",
+  message: "",
+  okText: "确定",
+  cancelText: "取消",
+  resolve: null as null | ((value: boolean) => void),
+});
+
+export function confirmDialog(
+  message: string,
+  options: { title?: string; okText?: string; cancelText?: string } = {}
+): Promise<boolean> {
+  confirmState.open = true;
+  confirmState.title = options.title ?? "请确认";
+  confirmState.message = message;
+  confirmState.okText = options.okText ?? "确定";
+  confirmState.cancelText = options.cancelText ?? "取消";
+  return new Promise((resolve) => {
+    confirmState.resolve = resolve;
+  });
+}
+
+export function resolveConfirm(value: boolean) {
+  confirmState.open = false;
+  const resolve = confirmState.resolve;
+  confirmState.resolve = null;
+  resolve?.(value);
+}
+
+export function clearDownloads() {
+  state.downloads = [];
 }
 
 export async function randomWallpaper() {
@@ -198,6 +236,7 @@ export async function downloadUrls(urls: string[]) {
   }
   await refreshLibrary();
   await refreshCatalog();
+  if (state.library.length) state.tab = "library";
 }
 
 const installCommands = {

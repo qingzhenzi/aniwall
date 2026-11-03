@@ -1,18 +1,33 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import WallpaperCard from "./WallpaperCard.vue";
 import {
   applyWallpaper,
+  confirmDialog,
   deleteWallpaper,
   importPaths,
+  refreshLibrary,
   restoreWallpaper,
   state,
 } from "../store";
 import { fmtDuration, fmtResolution } from "../format";
 
-const importPath = ref("");
-const importInput = ref<HTMLInputElement | null>(null);
+const keyword = ref("");
+
+const filtered = computed(() => {
+  const kw = keyword.value.trim().toLowerCase();
+  const items = state.library
+    .slice()
+    .sort((a, b) => (b.added_at || 0) - (a.added_at || 0));
+  if (!kw) return items;
+  return items.filter(
+    (item) =>
+      item.title.toLowerCase().includes(kw) ||
+      (item.source || "").toLowerCase().includes(kw)
+  );
+});
 
 const activeItem = computed(
   () => state.library.find((item) => item.id === state.activeId) || null
@@ -24,16 +39,34 @@ const metaText = computed(() =>
     : "还没有壁纸"
 );
 
-async function importOne() {
-  const value = importPath.value.trim();
-  if (!value) return;
-  await importPaths([value]);
-  importPath.value = "";
+async function pickFiles() {
+  try {
+    const selected = await open({
+      multiple: true,
+      directory: false,
+      filters: [{ name: "视频文件", extensions: ["mp4", "webm", "mkv", "mov", "m4v"] }],
+    });
+    const paths = Array.isArray(selected) ? selected : selected ? [selected] : [];
+    if (paths.length) await importPaths(paths as string[]);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-async function remove(id: string) {
-  if (!confirm("确定从壁纸库删除这个壁纸？（会删除本地文件）")) return;
-  await deleteWallpaper(id);
+async function remove(item: { id: string; title: string }) {
+  const ok = await confirmDialog(`确定删除《${item.title}》吗？本地视频文件也会一起删除。`, {
+    title: "删除壁纸",
+    okText: "删除",
+  });
+  if (ok) await deleteWallpaper(item.id);
+}
+
+async function restore() {
+  const ok = await confirmDialog("恢复成静态壁纸？当前动态壁纸会停止。", {
+    title: "恢复静态壁纸",
+    okText: "恢复",
+  });
+  if (ok) await restoreWallpaper();
 }
 
 async function openFolder() {
@@ -42,10 +75,6 @@ async function openFolder() {
   } catch {
     /* 忽略 */
   }
-}
-
-function focusImport() {
-  importInput.value?.focus();
 }
 </script>
 
@@ -57,9 +86,10 @@ function focusImport() {
         <p>{{ metaText }}</p>
       </div>
       <div class="actions">
-        <button class="ghost" @click="focusImport">导入本地视频…</button>
+        <button class="primary" @click="pickFiles">导入本地视频…</button>
         <button class="ghost" @click="openFolder">打开壁纸目录</button>
-        <button class="warn" @click="restoreWallpaper">恢复静态壁纸</button>
+        <button class="ghost" @click="refreshLibrary">刷新</button>
+        <button class="warn" @click="restore">恢复静态壁纸</button>
       </div>
     </div>
 
@@ -72,32 +102,30 @@ function focusImport() {
       </span>
     </div>
 
+    <div v-if="state.library.length" class="toolbar">
+      <input v-model="keyword" type="text" class="search" placeholder="搜索壁纸标题 / 来源…" />
+      <span class="muted">共 {{ state.library.length }} 张，显示 {{ filtered.length }} 张</span>
+    </div>
+
     <div class="grid">
       <WallpaperCard
-        v-for="item in state.library"
+        v-for="item in filtered"
         :key="item.id"
         :item="item"
         :active="item.id === state.activeId"
         @apply="applyWallpaper(item.id)"
-        @remove="remove(item.id)"
+        @remove="remove(item)"
       />
     </div>
 
     <div v-if="!state.library.length" class="empty">
-      <p>壁纸库还是空的。</p>
-      <p>去「获取壁纸」下载，或者直接把视频文件拖进这个窗口。</p>
+      <p>壁纸库还是空的</p>
+      <p class="muted">点上面的「导入本地视频…」，或者去「在线下载」拉清单里的壁纸</p>
+      <p class="muted">也可以把 mp4 / webm 文件直接拖进这个窗口</p>
     </div>
 
-    <div class="import-row">
-      <input
-        ref="importInput"
-        v-model="importPath"
-        type="text"
-        placeholder="或输入本地视频路径，例如 /home/you/Videos/a.mp4"
-        @keyup.enter="importOne"
-      />
-      <button class="ghost" @click="importOne">导入</button>
+    <div v-else-if="!filtered.length" class="empty">
+      <p>没有匹配「{{ keyword }}」的壁纸</p>
     </div>
-    <p class="drop-hint">提示：把 mp4 / webm 文件直接拖进窗口也可以导入。</p>
   </section>
 </template>

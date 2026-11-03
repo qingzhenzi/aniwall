@@ -22,7 +22,7 @@ const meta = computed(() =>
 </script>
 
 <template>
-  <article class="card" :class="{ active }">
+  <article class="card" :class="{ active }" @dblclick="emit('apply')" title="双击应用为桌面壁纸">
     <div
       class="poster"
       :style="posterUrl ? { backgroundImage: `url('${posterUrl}')` } : undefined"
