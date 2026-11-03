@@ -12,7 +12,7 @@ OUT="$ROOT/dist-pkg"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 
-cargo build --release --manifest-path src-tauri/Cargo.toml
+cargo build --release --features custom-protocol --manifest-path src-tauri/Cargo.toml
 
 mkdir -p "$STAGE/usr/bin" \
          "$STAGE/usr/share/applications" \

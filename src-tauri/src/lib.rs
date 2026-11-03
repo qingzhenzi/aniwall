@@ -20,6 +20,33 @@ fn cookie_path(settings: &Settings) -> Option<std::path::PathBuf> {
 }
 
 #[tauri::command]
+fn ui_log(message: String) -> Result<(), String> {
+    let _ = crate::paths::ensure_dirs();
+    let path = crate::paths::data_dir().join("ui.log");
+    let line = format!("[{}] {}\n", std::process::id(), message);
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .map_err(|e| e.to_string())?;
+    file.write_all(line.as_bytes()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn ui_ready() -> Result<String, String> {
+    // 前端初始化完成后写一个心跳文件，便于排障（也用于 CI / 冒烟测试）
+    let _ = crate::paths::ensure_dirs();
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let path = crate::paths::data_dir().join("last_ui_ready");
+    std::fs::write(&path, stamp.to_string()).map_err(|e| e.to_string())?;
+    Ok("ok".into())
+}
+
+#[tauri::command]
 fn env_status() -> EnvStatus {
     system::env_status()
 }
@@ -199,8 +226,17 @@ async fn download_urls(app: tauri::AppHandle, urls: Vec<String>) -> Result<Vec<W
 pub fn run() {
     let _ = paths::ensure_dirs();
     tauri::Builder::default()
+        .on_page_load(|_webview, payload| {
+            eprintln!("[aniwall] page load: {:?} {}", payload.event(), payload.url());
+        })
+        .setup(|_app| {
+            eprintln!("[aniwall] setup complete");
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             env_status,
+            ui_ready,
+            ui_log,
             list_wallpapers,
             current_wallpaper,
             set_wallpaper,

@@ -73,6 +73,11 @@ pnpm install
 cargo tauri build          # 产物：src-tauri/target/release/bundle/
 ```
 
+> 注意：`tauri.conf.json` 里配了 `devUrl`（Vite 开发服务器）。
+> 如果直接用 `cargo build --release`，程序会去连 `http://localhost:1420` 导致白屏；
+> 请用 `cargo tauri build`，或手动加 `--features custom-protocol`：
+> `cargo build --release --features custom-protocol`。
+
 开发调试：
 
 ```bash

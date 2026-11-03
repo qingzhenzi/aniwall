@@ -192,4 +192,5 @@ export async function init() {
   await Promise.all([refreshEnv(), refreshCatalog(), loadSettings()]);
   await refreshLibrary();
   state.ready = true;
+  void invoke("ui_ready").catch(() => {});
 }

@@ -30,7 +30,7 @@ prepare() {
 build() {
   cd "$pkgname-$pkgver"
   pnpm build
-  cargo build --release --manifest-path src-tauri/Cargo.toml
+  cargo build --release --features custom-protocol --manifest-path src-tauri/Cargo.toml
 }
 
 package() {
