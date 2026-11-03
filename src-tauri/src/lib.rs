@@ -473,6 +473,10 @@ pub fn run() {
     let minimized = std::env::args().any(|arg| arg == "--minimized");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // 再次启动时，把已有窗口带到前台（而不是开第二个托盘图标）
+            show_main_window(app);
+        }))
         .on_page_load(|_webview, payload| {
             eprintln!("[aniwall] page load: {:?} {}", payload.event(), payload.url());
         })
