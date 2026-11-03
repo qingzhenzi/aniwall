@@ -9,6 +9,7 @@ src-tauri/gen/
 *.deb
 *.rpm
 *.pkg.tar.zst
+dist-pkg/
 src-tauri/target/release/bundle/
 
 # 本地杂项

@@ -24,7 +24,8 @@
 - **播放设置**：裁剪填充 / 静音 / 最大化时暂停 / 电量阈值暂停 / 循环播放。
 - **初始化与自诊**：检测发行版、会话类型、Plasma 版本、插件与依赖（yt-dlp / ffmpeg / qdbus6 / curl / bsdtar），
   可一键安装插件、用 `pkexec pacman` 补齐依赖、创建桌面快捷方式。
-- **CLI**：`aniwall --check` 输出环境诊断 JSON，方便排障和 CI 冒烟测试。
+- **CLI**：`aniwall --check`（环境诊断 JSON）、`--list`（列出壁纸库）、
+  `--set <id|文件路径>`（直接切换壁纸）、`--restore`（恢复静态壁纸）。
 
 ---
 
@@ -78,6 +79,20 @@ cargo tauri build          # 产物：src-tauri/target/release/bundle/
 pnpm tauri dev
 ```
 
+### 方式四：本地直接打 pacman 包（无需联网拉 linuxdeploy）
+
+```bash
+./scripts/package-local.sh
+# 产物：dist-pkg/aniwall-0.1.0-1-x86_64.pkg.tar.zst
+sudo pacman -U dist-pkg/aniwall-0.1.0-1-x86_64.pkg.tar.zst
+```
+
+### 方式五：AppImage 的说明
+
+`cargo tauri build --bundles appimage` 需要从 GitHub 拉取 `linuxdeploy` 等打包工具，
+国内网络可能很慢或卡住；CI（GitHub Actions）里会正常产出 AppImage。
+本地更推荐上面的 pacman 包或 `scripts/install.sh`。
+
 ---
 
 ## 数据位置
@@ -89,7 +104,8 @@ pnpm tauri dev
 | 库索引 | `~/.local/share/aniwall/library.json` |
 | 设置 | `~/.config/aniwall/settings.json` |
 
-桌面快捷方式由应用内「创建桌面快捷方式」生成（`~/.local/share/applications/aniwall.desktop`）。
+桌面快捷方式由应用内「创建桌面快捷方式」生成（`~/.local/share/applications/aniwall.desktop`），
+也可以从应用菜单搜索「AniWall」启动；`scripts/install.sh` 与 `scripts/package-local.sh` 会在桌面放一份启动器。
 
 ---
 
@@ -131,6 +147,11 @@ A：Tauri 依赖 WebKitGTK / GTK / libsoup，这些是 glibc 动态库，musl �
 │       ├── system.rs     # 环境检测、插件/依赖安装
 │       └── catalog.rs    # 内置清单
 ├── catalog.json          # 内置壁纸清单（BVID / 封面 / 标签）
+├── packaging/aniwall.desktop
+├── scripts/
+│   ├── install.sh          # 构建 AppImage 并安装到 ~/.local
+│   ├── package-local.sh    # 用 release 二进制打 pacman 包
+│   └── download-catalog.sh # 命令行批量下载内置清单
 ├── PKGBUILD
 ├── .github/workflows/    # GitHub Actions
 └── .gitea/workflows/     # Gitea Actions
