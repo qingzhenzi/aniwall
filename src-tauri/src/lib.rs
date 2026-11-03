@@ -50,7 +50,7 @@ fn toggle_main_window(app: &AppHandle) {
 }
 
 fn update_tray_tooltip(app: &AppHandle, title: &str) {
-    if let Some(tray) = app.tray_by_id("main") {
+    if let Some(tray) = app.tray_by_id("aniwall") {
         let _ = tray.set_tooltip(Some(format!("{APP_NAME} · {title}")));
     }
 }
@@ -164,7 +164,7 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn refresh_tray_menu(app: &AppHandle) {
-    if let Some(tray) = app.tray_by_id("main") {
+    if let Some(tray) = app.tray_by_id("aniwall") {
         if let Ok(menu) = build_tray_menu(app) {
             let _ = tray.set_menu(Some(menu));
         }
@@ -174,7 +174,7 @@ fn refresh_tray_menu(app: &AppHandle) {
 fn init_tray(app: &AppHandle) -> tauri::Result<()> {
     let menu = build_tray_menu(app)?;
 
-    let mut builder = TrayIconBuilder::with_id("main")
+    let mut builder = TrayIconBuilder::with_id("aniwall")
         .tooltip(format!("{APP_NAME} · 动态壁纸管理器"))
         .menu(&menu)
         .show_menu_on_left_click(false)
