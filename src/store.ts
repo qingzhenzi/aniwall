@@ -2,19 +2,20 @@ import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type {
+  AppInfo,
   CatalogItem,
   DownloadItem,
   EnvStatus,
   Settings,
-  TabKey,
   Wallpaper,
 } from "./types";
 import { pushToast } from "./toast";
 
 export const state = reactive({
   ready: false,
-  tab: "library" as TabKey,
   env: null as EnvStatus | null,
+  appInfo: null as AppInfo | null,
+  autostart: false,
   library: [] as Wallpaper[],
   catalog: [] as CatalogItem[],
   settings: null as Settings | null,
@@ -79,6 +80,46 @@ export async function refreshCatalog() {
 
 export async function loadSettings() {
   state.settings = await call<Settings>("read_settings", {}, "读取设置");
+}
+
+export async function loadAutostart() {
+  state.autostart = await call<boolean>("get_autostart", {}, "读取开机自启状态");
+}
+
+export async function setAutostart(enabled: boolean): Promise<boolean> {
+  try {
+    const message = await invoke<string>("set_autostart", { enabled });
+    pushToast(message, "ok");
+    state.autostart = await invoke<boolean>("get_autostart");
+  } catch (err) {
+    pushToast(`设置开机自启失败：${String(err)}`, "error");
+    state.autostart = !enabled;
+  }
+  return state.autostart;
+}
+
+export async function loadAppInfo() {
+  state.appInfo = await call<AppInfo>("app_info", {}, "读取应用信息");
+}
+
+export async function randomWallpaper() {
+  try {
+    const message = await invoke<string>("random_wallpaper");
+    pushToast(message, "ok");
+    await refreshCurrent();
+  } catch (err) {
+    pushToast(`随机换壁纸失败：${String(err)}`, "error");
+  }
+}
+
+export async function nextWallpaper() {
+  try {
+    const message = await invoke<string>("next_wallpaper");
+    pushToast(message, "ok");
+    await refreshCurrent();
+  } catch (err) {
+    pushToast(`切换下一张失败：${String(err)}`, "error");
+  }
 }
 
 export async function saveSettings(next: Settings): Promise<boolean> {
@@ -185,11 +226,16 @@ export function hookEvents() {
   void listen("library-updated", () => {
     void refreshLibrary().then(() => refreshCatalog());
   });
+  void listen<string>("wallpaper-changed", (event) => {
+    if (event.payload) pushToast(String(event.payload), "ok");
+    void refreshCurrent();
+  });
 }
 
 export async function init() {
   hookEvents();
   await Promise.all([refreshEnv(), refreshCatalog(), loadSettings()]);
+  await Promise.allSettled([loadAutostart(), loadAppInfo()]);
   await refreshLibrary();
   state.ready = true;
   void invoke("ui_ready").catch(() => {});

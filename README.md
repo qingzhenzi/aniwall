@@ -2,8 +2,8 @@
 
 **KDE Plasma 6 动态壁纸管理器**：从 B 站等站点下载视频壁纸，自动生成封面、维护壁纸库，然后一键应用到桌面。
 
-> 前端 **Vue 3 + TypeScript + Vite**，后端 **Tauri 2（Rust）**，壁纸渲染走
-> [Smart Video Wallpaper Reborn](https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn) 插件。
+> 前端 **Vue 3 + TypeScript + Vite**（单页设计），后端 **Tauri 2（Rust）**，带**系统托盘**与**开机自启**；
+> 壁纸渲染走 [Smart Video Wallpaper Reborn](https://github.com/luisbocanegra/plasma-smart-video-wallpaper-reborn) 插件。
 
 ---
 
@@ -16,6 +16,12 @@
 
 ## 功能
 
+- **单页界面 + 托盘常驻**：所有功能在一页里（壁纸库 / 在线下载 / 播放设置 / 诊断 / 关于，顶部锚点导航）；
+  关闭窗口**不会退出**，而是最小化到系统托盘；托盘左键显示/隐藏窗口，右键菜单可「随机换一张 / 下一张 /
+  恢复静态壁纸 / 开机自启 / 退出」。
+- **开机自启**：设置页一键开关，写入 `~/.config/autostart/aniwall.desktop`，
+  以 `aniwall --minimized` 静默启动到托盘（不弹窗）。
+- **快捷切换**：顶栏「随机换一张 / 下一张」，或 `aniwall --random` / `--next`。
 - **壁纸库**：导入本地视频（拖拽或填路径）、自动生成封面缩略图、显示分辨率 / 时长 / 体积、一键应用、删除。
 - **下载**：内置 B 站清单（21 个二次元动态壁纸）+ 自定义地址（B 站链接、BV 号、直链 mp4/webm）。
   下载后自动 `ffprobe` 解析元数据、`ffmpeg` 抽封面并入库。
@@ -24,8 +30,8 @@
 - **播放设置**：裁剪填充 / 静音 / 最大化时暂停 / 电量阈值暂停 / 循环播放。
 - **初始化与自诊**：检测发行版、会话类型、Plasma 版本、插件与依赖（yt-dlp / ffmpeg / qdbus6 / curl / bsdtar），
   可一键安装插件、用 `pkexec pacman` 补齐依赖、创建桌面快捷方式。
-- **CLI**：`aniwall --check`（环境诊断 JSON）、`--list`（列出壁纸库）、
-  `--set <id|文件路径>`（直接切换壁纸）、`--restore`（恢复静态壁纸）。
+- **CLI**：`aniwall --check`（环境诊断 JSON）、`--list`、`--set <id|文件路径>`、`--random`、`--next`、
+  `--restore`、`--autostart on|off|status`、`--minimized`（开机自启时静默到托盘）。
 
 ---
 
@@ -84,6 +90,8 @@ cargo tauri build          # 产物：src-tauri/target/release/bundle/
 pnpm tauri dev
 ```
 
+> 关闭窗口 = 最小化到托盘；要真正退出请用托盘菜单的「退出」或 `pkill aniwall`。
+
 ### 方式四：本地直接打 pacman 包（无需联网拉 linuxdeploy）
 
 ```bash
@@ -116,6 +124,13 @@ sudo pacman -U dist-pkg/aniwall-0.1.0-1-x86_64.pkg.tar.zst
 
 ## 常见问题
 
+**Q：点了关闭按钮，程序还在跑？**
+A：这是托盘常驻的设计（和 ime-theme-switcher 一样），关闭窗口只是隐藏。退出请用托盘菜单「退出」。
+
+**Q：开机自启在哪里开？**
+A：设置页「开机自启」勾选即可，会写 `~/.config/autostart/aniwall.desktop`，
+启动参数是 `--minimized`（静默到托盘）。命令行也可以：`aniwall --autostart on`。
+
 **Q：桌面是黑的 / 没有动起来？**
 A：确认 `Smart Video Wallpaper Reborn` 已安装且在系统设置 → 壁纸里选中过；锁屏或桌面被遮挡时插件会自动暂停（正常）。
 也可执行 `aniwall --check` 看环境是否齐全。
@@ -139,8 +154,8 @@ A：Tauri 依赖 WebKitGTK / GTK / libsoup，这些是 glibc 动态库，musl �
 
 ```
 .
-├── src/                  # Vue 3 + TS 前端
-│   ├── components/       # TopBar / Library / Fetch / Health / Settings / About
+├── src/                  # Vue 3 + TS 前端（单页）
+│   ├── components/       # TopBar / SectionNav / Library / Fetch / Health / Settings / About
 │   ├── store.ts          # 全局状态 + invoke 封装
 │   └── types.ts          # 与 Rust 端对齐的类型
 ├── src-tauri/            # Tauri (Rust) 后端

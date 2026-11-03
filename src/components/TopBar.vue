@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { refreshCatalog, refreshEnv, refreshLibrary, state } from "../store";
+import {
+  nextWallpaper,
+  randomWallpaper,
+  refreshCatalog,
+  refreshEnv,
+  refreshLibrary,
+  state,
+} from "../store";
 
 const pillClass = computed(() => {
   const env = state.env;
@@ -11,7 +18,7 @@ const pillClass = computed(() => {
 const pillText = computed(() => {
   const env = state.env;
   if (!env) return "检测中…";
-  return `${env.distro_id} · ${env.session_type} · ${env.plasma_version || "无 KDE"}`;
+  return `${env.distro_id} · ${env.session_ok ? "KDE Wayland" : env.session_type}`;
 });
 
 async function refresh() {
@@ -29,6 +36,8 @@ async function refresh() {
     </div>
     <div class="topbar-right">
       <span :class="pillClass">{{ pillText }}</span>
+      <button class="primary" @click="randomWallpaper">随机换一张</button>
+      <button class="ghost" @click="nextWallpaper">下一张</button>
       <button class="ghost" @click="refresh">刷新</button>
     </div>
   </header>

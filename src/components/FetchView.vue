@@ -53,7 +53,7 @@ function downloadCustom() {
         <p>来自 B 站（1080p / 30fps，体积小、解码轻）。下载后自动生成封面并入库。</p>
       </div>
       <div class="actions">
-        <button :disabled="!selectedCount" @click="downloadSelected">
+        <button class="primary" :disabled="!selectedCount" @click="downloadSelected">
           下载选中{{ selectedCount ? `（${selectedCount}）` : "" }}
         </button>
         <button class="ghost" @click="downloadAll">全部下载</button>
@@ -87,7 +87,7 @@ function downloadCustom() {
         placeholder="https://www.bilibili.com/video/BV… 或 BV… / 或 https://…/a.mp4"
         @keyup.enter="downloadCustom"
       />
-      <button @click="downloadCustom">下载</button>
+      <button class="primary" @click="downloadCustom">下载</button>
     </div>
 
     <div class="divider" />

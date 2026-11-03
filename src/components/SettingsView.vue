@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from "vue";
-import { saveSettings, state } from "../store";
+import { onMounted, reactive, ref, watch } from "vue";
+import { loadAutostart, saveSettings, setAutostart, state } from "../store";
 import type { Settings } from "../types";
 
 const form = reactive<Settings>({
@@ -23,7 +23,19 @@ watch(
   { immediate: true, deep: true }
 );
 
+const autostart = ref(state.autostart);
 const saving = ref(false);
+
+watch(
+  () => state.autostart,
+  (value) => {
+    autostart.value = value;
+  }
+);
+
+onMounted(() => {
+  void loadAutostart();
+});
 
 async function save() {
   saving.value = true;
@@ -33,6 +45,10 @@ async function save() {
     saving.value = false;
   }
 }
+
+async function toggleAutostart() {
+  autostart.value = await setAutostart(!autostart.value);
+}
 </script>
 
 <template>
@@ -40,14 +56,30 @@ async function save() {
     <div class="section-head">
       <div>
         <h2>播放设置</h2>
-        <p>保存后会同步给当前已应用的壁纸。</p>
+        <p>保存后会同步给当前已应用的壁纸；其它选项即时生效。</p>
       </div>
       <div class="actions">
-        <button :disabled="saving" @click="save">保存设置</button>
+        <button class="primary" :disabled="saving" @click="save">保存设置</button>
       </div>
     </div>
 
     <div class="form">
+      <label class="field">
+        <span>开机自启</span>
+        <div class="inline">
+          <input v-model="autostart" type="checkbox" @change="toggleAutostart" />
+          <span class="muted">启动后静默到托盘，不弹窗口</span>
+        </div>
+        <span class="hint">写入 ~/.config/autostart/aniwall.desktop（带 --minimized 参数）</span>
+      </label>
+
+      <div class="field">
+        <span>托盘与窗口</span>
+        <div class="inline">
+          <span class="muted">关闭窗口 = 最小化到托盘；托盘左键显示/隐藏，托盘菜单可随机换、退出</span>
+        </div>
+      </div>
+
       <label class="field">
         <span>填充模式</span>
         <select v-model.number="form.fill_mode">

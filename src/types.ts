@@ -68,3 +68,12 @@ export interface DownloadItem {
   status: "pending" | "start" | "downloading" | "done" | "error";
   message: string;
 }
+
+export interface AppInfo {
+  name: string;
+  version: string;
+  exe: string;
+  autostart: boolean;
+  tray: boolean;
+  tested_on: string;
+}

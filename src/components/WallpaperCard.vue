@@ -41,7 +41,7 @@ const meta = computed(() =>
       <h3 :title="item.title">{{ item.title }}</h3>
       <div class="meta">{{ meta || "—" }}</div>
       <div class="row">
-        <button class="mini" @click="emit('apply')">{{ active ? "重新应用" : "应用" }}</button>
+        <button class="mini primary" @click="emit('apply')">{{ active ? "重新应用" : "应用" }}</button>
         <button class="mini danger" @click="emit('remove')">删除</button>
       </div>
     </div>

@@ -41,6 +41,20 @@ const checks = computed<CheckRow[]>(() => {
       state: env.plugin_ok ? "ok" : "bad",
       action: env.plugin_ok ? undefined : { kind: "plugin", text: "安装插件" },
     },
+    {
+      label: "托盘",
+      detail: state.appInfo?.tray
+        ? "已就绪 · 关闭窗口最小化到托盘，托盘左键显示/隐藏"
+        : "未就绪（重开应用或检查 libayatana-appindicator）",
+      state: state.appInfo?.tray ? "ok" : "warn",
+    },
+    {
+      label: "开机自启",
+      detail: state.autostart
+        ? "已开启 · 登录后静默启动到托盘（--minimized）"
+        : "未开启 · 可在「播放设置」里打开",
+      state: state.autostart ? "ok" : "warn",
+    },
   ];
   for (const tool of env.tools) {
     rows.push({
