@@ -6,6 +6,8 @@ authors = ["AniWall contributors"]
 edition = "2021"
 rust-version = "1.77"
 license = "MIT"
+repository = "https://github.com/qingzhenzi/aniwall"
+homepage = "https://github.com/qingzhenzi/aniwall"
 
 [lib]
 name = "aniwall_lib"

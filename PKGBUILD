@@ -4,7 +4,7 @@ pkgver=0.1.0
 pkgrel=1
 pkgdesc="KDE Plasma 6 动态壁纸管理器：下载 / 管理 / 一键切换视频壁纸"
 arch=('x86_64')
-url="https://github.com/aniwall/aniwall"
+url="https://github.com/qingzhenzi/aniwall"
 license=('MIT')
 depends=(
   'webkit2gtk-4.1'

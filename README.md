@@ -65,7 +65,7 @@ AppImage 仍依赖系统里的 WebKitGTK 4.1（Arch 系默认已装）。
 ### 方式二：Arch / CachyOS 包（PKGBUILD）
 
 ```bash
-git clone <repo> aniwall && cd aniwall
+git clone git@github.com:qingzhenzi/aniwall.git aniwall && cd aniwall
 makepkg -si
 ```
 
