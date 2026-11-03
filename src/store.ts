@@ -222,14 +222,22 @@ export async function downloadUrls(urls: string[]) {
     pushToast("没有选中的壁纸", "warn");
     return;
   }
-  state.downloads = list.map((url) => ({
+  const batchId = `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const now = Date.now();
+  const tasks: DownloadItem[] = list.map((url, index) => ({
+    id: `${batchId}-${index}`,
+    batchId,
     url,
+    title: "",
     percent: 0,
     status: "pending",
     message: "等待中",
+    createdAt: now + index,
   }));
+  // 追加到队列（保留之前的任务记录），最新的在上面
+  state.downloads = [...tasks, ...state.downloads].slice(0, 200);
   try {
-    await invoke("download_urls", { urls: list });
+    await invoke("download_urls", { urls: list, batchId });
     pushToast("下载任务结束", "ok");
   } catch (err) {
     pushToast(`下载失败：${String(err)}`, "error");
@@ -237,6 +245,26 @@ export async function downloadUrls(urls: string[]) {
   await refreshLibrary();
   await refreshCatalog();
   if (state.library.length) state.tab = "library";
+}
+
+export function removeDownload(id: string) {
+  state.downloads = state.downloads.filter((item) => item.id !== id);
+}
+
+export function clearFinishedDownloads() {
+  state.downloads = state.downloads.filter(
+    (item) => item.status === "start" || item.status === "downloading" || item.status === "pending"
+  );
+}
+
+export async function updateWallpaper(id: string, title: string) {
+  try {
+    await invoke<Wallpaper>("update_wallpaper", { id, title });
+    pushToast("已保存壁纸标题", "ok");
+    await refreshLibrary();
+  } catch (err) {
+    pushToast(`保存失败：${String(err)}`, "error");
+  }
 }
 
 const installCommands = {
@@ -251,17 +279,25 @@ export async function runInstall(kind: keyof typeof installCommands): Promise<st
 }
 
 export function hookEvents() {
-  void listen<{ index: number; percent: number; status: string; message: string }>(
-    "download-progress",
-    (event) => {
-      const payload = event.payload;
-      const item = state.downloads[payload.index];
-      if (!item) return;
-      item.percent = payload.percent || 0;
-      item.status = (payload.status as DownloadItem["status"]) || item.status;
-      item.message = payload.message || item.message;
+  void listen<{
+    batch_id: string;
+    index: number;
+    percent: number;
+    status: string;
+    message: string;
+  }>("download-progress", (event) => {
+    const payload = event.payload;
+    if (!payload || !payload.batch_id) return;
+    const id = `${payload.batch_id}-${payload.index}`;
+    const item = state.downloads.find((task) => task.id === id);
+    if (!item) return;
+    item.percent = payload.percent || 0;
+    item.status = (payload.status as DownloadItem["status"]) || item.status;
+    item.message = payload.message || item.message;
+    if (payload.status === "done") {
+      item.title = payload.message || item.title;
     }
-  );
+  });
   void listen("library-updated", () => {
     void refreshLibrary().then(() => refreshCatalog());
   });

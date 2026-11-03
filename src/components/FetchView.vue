@@ -4,6 +4,7 @@ import CatalogCard from "./CatalogCard.vue";
 import DownloadList from "./DownloadList.vue";
 import {
   clearDownloads,
+  clearFinishedDownloads,
   confirmDialog,
   downloadUrls,
   state,
@@ -61,8 +62,16 @@ async function downloadCustom() {
   await downloadUrls([value]);
 }
 
-function clear() {
-  clearDownloads();
+function clearFinished() {
+  clearFinishedDownloads();
+}
+
+async function clearAll() {
+  const ok = await confirmDialog("清空下载记录？（不影响已经下载的壁纸文件）", {
+    title: "清空下载记录",
+    okText: "清空",
+  });
+  if (ok) clearDownloads();
 }
 </script>
 
@@ -121,8 +130,11 @@ function clear() {
         <p v-else>最近的任务记录。</p>
       </div>
       <div class="actions">
-        <button class="ghost" :disabled="!state.downloads.length || downloading" @click="clear">
-          清空记录
+        <button class="ghost" :disabled="!state.downloads.length" @click="clearFinished">
+          清空已完成
+        </button>
+        <button class="ghost" :disabled="!state.downloads.length || downloading" @click="clearAll">
+          清空全部
         </button>
       </div>
     </div>

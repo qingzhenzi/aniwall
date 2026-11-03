@@ -46,6 +46,9 @@ jobs:
       - name: Build frontend
         run: pnpm build
 
+      - name: Frontend tests (vitest)
+        run: pnpm test
+
       - name: CLI smoke test
         run: cargo run --manifest-path src-tauri/Cargo.toml -- --check
 

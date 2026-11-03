@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import type { DownloadItem } from "../types";
+import { removeDownload } from "../store";
 
 defineProps<{ downloads: DownloadItem[] }>();
 
 function clamp(value: number) {
   return Math.max(0, Math.min(100, value || 0));
+}
+
+function running(item: DownloadItem) {
+  return item.status === "pending" || item.status === "start" || item.status === "downloading";
 }
 
 function statusText(item: DownloadItem) {
@@ -19,17 +24,20 @@ function statusText(item: DownloadItem) {
   <div class="download-list">
     <p v-if="!downloads.length" class="muted">暂无下载任务。</p>
     <div
-      v-for="(item, index) in downloads"
-      :key="index"
+      v-for="item in downloads"
+      :key="item.id"
       class="dl"
       :class="item.status === 'error' ? 'error' : item.status === 'done' ? 'done' : ''"
     >
       <div class="top">
-        <span class="url" :title="item.url">{{ item.url }}</span>
+        <span class="url" :title="item.url">{{ item.title || item.url }}</span>
         <span>{{ statusText(item) }}</span>
       </div>
       <div class="bar"><span :style="{ width: clamp(item.percent) + '%' }" /></div>
-      <div class="muted" style="font-size: 11.5px; margin-top: 4px">{{ item.message }}</div>
+      <div class="dl-bottom">
+        <span class="muted dl-message" :title="item.message">{{ item.message }}</span>
+        <button v-if="!running(item)" class="mini ghost" @click="removeDownload(item.id)">移除</button>
+      </div>
     </div>
   </div>
 </template>

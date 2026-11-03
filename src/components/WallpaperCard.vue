@@ -5,7 +5,7 @@ import type { Wallpaper } from "../types";
 import { fmtDuration, fmtResolution, fmtSize } from "../format";
 
 const props = defineProps<{ item: Wallpaper; active: boolean }>();
-const emit = defineEmits<{ apply: []; remove: [] }>();
+const emit = defineEmits<{ apply: []; edit: []; remove: [] }>();
 
 const brokenPoster = ref(false);
 
@@ -42,6 +42,7 @@ const meta = computed(() =>
       <div class="meta">{{ meta || "—" }}</div>
       <div class="row">
         <button class="mini primary" @click="emit('apply')">{{ active ? "重新应用" : "应用" }}</button>
+        <button class="mini ghost" @click="emit('edit')">编辑</button>
         <button class="mini danger" @click="emit('remove')">删除</button>
       </div>
     </div>

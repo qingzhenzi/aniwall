@@ -311,6 +311,23 @@ fn import_files(paths: Vec<String>) -> Result<Vec<Wallpaper>, String> {
 }
 
 #[tauri::command]
+fn update_wallpaper(id: String, title: String) -> Result<Wallpaper, String> {
+    let title = title.trim().to_string();
+    if title.is_empty() {
+        return Err("标题不能为空".into());
+    }
+    let mut items = library::load();
+    let item = items
+        .iter_mut()
+        .find(|w| w.id == id)
+        .ok_or_else(|| "壁纸不存在".to_string())?;
+    item.title = title;
+    let updated = item.clone();
+    library::save(&items)?;
+    Ok(updated)
+}
+
+#[tauri::command]
 fn delete_wallpaper(id: String) -> Result<(), String> {
     library::delete(&id)
 }
@@ -391,10 +408,15 @@ fn open_folder() -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn download_urls(app: tauri::AppHandle, urls: Vec<String>) -> Result<Vec<Wallpaper>, String> {
+async fn download_urls(
+    app: tauri::AppHandle,
+    urls: Vec<String>,
+    batch_id: String,
+) -> Result<Vec<Wallpaper>, String> {
     if urls.is_empty() {
         return Err("没有需要下载的地址".into());
     }
+    let batch = batch_id.clone();
     let settings = library::read_settings();
     let cookie = cookie_path(&settings);
     let total = urls.len();
@@ -408,18 +430,19 @@ async fn download_urls(app: tauri::AppHandle, urls: Vec<String>) -> Result<Vec<W
             let _ = app2.emit(
                 "download-progress",
                 serde_json::json!({
-                    "index": index, "total": total, "url": url,
+                    "batch_id": batch, "index": index, "total": total, "url": url,
                     "percent": 0.0, "status": "start", "message": "开始解析"
                 }),
             );
 
             let app3 = app2.clone();
             let progress_url = url.clone();
+            let batch2 = batch.clone();
             let mut on_progress = move |percent: f64, message: String| {
                 let _ = app3.emit(
                     "download-progress",
                     serde_json::json!({
-                        "index": index, "total": total, "url": progress_url,
+                        "batch_id": batch2, "index": index, "total": total, "url": progress_url,
                         "percent": percent, "status": "downloading", "message": message
                     }),
                 );
@@ -431,7 +454,7 @@ async fn download_urls(app: tauri::AppHandle, urls: Vec<String>) -> Result<Vec<W
                         let _ = app2.emit(
                             "download-progress",
                             serde_json::json!({
-                                "index": index, "total": total, "url": url,
+                                "batch_id": batch, "index": index, "total": total, "url": url,
                                 "percent": 100.0, "status": "done", "message": item.title
                             }),
                         );
@@ -441,7 +464,7 @@ async fn download_urls(app: tauri::AppHandle, urls: Vec<String>) -> Result<Vec<W
                         let _ = app2.emit(
                             "download-progress",
                             serde_json::json!({
-                                "index": index, "total": total, "url": url,
+                                "batch_id": batch, "index": index, "total": total, "url": url,
                                 "percent": 0.0, "status": "error", "message": format!("入库失败：{e}")
                             }),
                         );
@@ -451,7 +474,7 @@ async fn download_urls(app: tauri::AppHandle, urls: Vec<String>) -> Result<Vec<W
                     let _ = app2.emit(
                         "download-progress",
                         serde_json::json!({
-                            "index": index, "total": total, "url": url,
+                            "batch_id": batch, "index": index, "total": total, "url": url,
                             "percent": 0.0, "status": "error", "message": e
                         }),
                     );
@@ -514,6 +537,7 @@ pub fn run() {
             next_wallpaper,
             restore_wallpaper,
             import_files,
+            update_wallpaper,
             delete_wallpaper,
             read_settings,
             save_settings,

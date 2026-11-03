@@ -47,7 +47,8 @@ async function save() {
 }
 
 async function toggleAutostart() {
-  autostart.value = await setAutostart(!autostart.value);
+  // v-model 已经把勾选状态改成新值，这里直接同步给后端
+  autostart.value = await setAutostart(autostart.value);
 }
 </script>
 

@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import WallpaperCard from "./WallpaperCard.vue";
+import EditWallpaperModal from "./EditWallpaperModal.vue";
 import {
   applyWallpaper,
   confirmDialog,
@@ -11,10 +12,13 @@ import {
   refreshLibrary,
   restoreWallpaper,
   state,
+  updateWallpaper,
 } from "../store";
+import type { Wallpaper } from "../types";
 import { fmtDuration, fmtResolution } from "../format";
 
 const keyword = ref("");
+const editing = ref<Wallpaper | null>(null);
 
 const filtered = computed(() => {
   const kw = keyword.value.trim().toLowerCase();
@@ -69,6 +73,16 @@ async function restore() {
   if (ok) await restoreWallpaper();
 }
 
+function startEdit(item: Wallpaper) {
+  editing.value = item;
+}
+
+async function saveEdit(title: string) {
+  const target = editing.value;
+  editing.value = null;
+  if (target) await updateWallpaper(target.id, title);
+}
+
 async function openFolder() {
   try {
     await invoke("open_folder");
@@ -114,6 +128,7 @@ async function openFolder() {
         :item="item"
         :active="item.id === state.activeId"
         @apply="applyWallpaper(item.id)"
+        @edit="startEdit(item)"
         @remove="remove(item)"
       />
     </div>
@@ -127,5 +142,11 @@ async function openFolder() {
     <div v-else-if="!filtered.length" class="empty">
       <p>没有匹配「{{ keyword }}」的壁纸</p>
     </div>
+
+    <EditWallpaperModal
+      :item="editing"
+      @save="saveEdit"
+      @close="editing = null"
+    />
   </section>
 </template>

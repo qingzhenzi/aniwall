@@ -63,10 +63,14 @@ export interface DesktopWallpaperState {
 export type TabKey = "library" | "fetch" | "health" | "settings" | "about";
 
 export interface DownloadItem {
+  id: string;
+  batchId: string;
   url: string;
+  title: string;
   percent: number;
   status: "pending" | "start" | "downloading" | "done" | "error";
   message: string;
+  createdAt: number;
 }
 
 export interface AppInfo {

@@ -23,16 +23,18 @@
 - **开机自启**：设置页一键开关，写入 `~/.config/autostart/aniwall.desktop`，
   以 `aniwall --minimized` 静默启动到托盘（不弹窗）。
 - **快捷切换**：顶栏「随机换一张 / 下一张」，或 `aniwall --random` / `--next`。
-- **壁纸库**：导入本地视频（拖拽或填路径）、自动生成封面缩略图、显示分辨率 / 时长 / 体积、一键应用、删除。
+- **壁纸库**：导入本地视频（系统文件选择框 / 拖拽）、自动生成封面、搜索、双击应用、**编辑标题**、删除。
 - **下载**：内置 B 站清单（21 个二次元动态壁纸）+ 自定义地址（B 站链接、BV 号、直链 mp4/webm）。
-  下载后自动 `ffprobe` 解析元数据、`ffmpeg` 抽封面并入库。
+  下载后自动 `ffprobe` 解析元数据、`ffmpeg` 抽封面并入库。**多任务下载队列**：批量下载时每个链接
+  独立一行进度，可随时切到别的页面，支持逐条移除 / 清空已完成 / 清空全部。
 - **一键切换**：通过 `qdbus6` 调用 PlasmaShell 脚本，把视频写入
   `Smart Video Wallpaper Reborn` 的配置，所有屏幕 / 桌面同时生效。
 - **播放设置**：裁剪填充 / 静音 / 最大化时暂停 / 电量阈值暂停 / 循环播放。
 - **初始化与自诊**：检测发行版、会话类型、Plasma 版本、插件与依赖（yt-dlp / ffmpeg / qdbus6 / curl / bsdtar），
   可一键安装插件、用 `pkexec pacman` 补齐依赖、创建桌面快捷方式。
 - **CLI**：`aniwall --check`（环境诊断 JSON）、`--list`、`--set <id|文件路径>`、`--random`、`--next`、
-  `--restore`、`--autostart on|off|status`、`--minimized`（开机自启时静默到托盘）。
+  `--restore`、`--settings`、`--rename <id> <标题>`、`--selftest`（后端自检）、
+  `--autostart on|off|status`、`--minimized`（开机自启时静默到托盘）。
 
 ---
 
@@ -89,6 +91,8 @@ cargo tauri build          # 产物：src-tauri/target/release/bundle/
 
 ```bash
 pnpm tauri dev
+# 前端单元测试（vitest）
+pnpm test
 ```
 
 > 关闭窗口 = 最小化到托盘；要真正退出请用托盘菜单的「退出」或 `pkill aniwall`。
