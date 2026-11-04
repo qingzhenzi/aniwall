@@ -105,7 +105,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/*.AppImage
-            artifacts/*.deb
-            artifacts/*.pkg.tar.zst
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.pkg.tar.zst
           generate_release_notes: true
