@@ -17,8 +17,9 @@ depends=(
   'libarchive'
   'qt6-tools'
   'polkit'
+  'libayatana-appindicator'
 )
-makedepends=('cargo' 'nodejs' 'pnpm' 'base-devel' 'libsoup3')
+makedepends=('cargo' 'nodejs' 'pnpm' 'base-devel' 'libsoup3' 'libayatana-appindicator')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 

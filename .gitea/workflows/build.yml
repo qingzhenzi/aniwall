@@ -49,7 +49,7 @@ jobs:
         run: cargo run --manifest-path src-tauri/Cargo.toml -- --check
 
       - name: Build bundles
-        run: cargo tauri build --bundles appimage,deb
+        run: pnpm tauri build --bundles appimage,deb
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -68,7 +68,8 @@ jobs:
       - name: Prepare toolchain
         run: |
           pacman -Syu --noconfirm --needed git nodejs pnpm cargo rust \
-            webkit2gtk-4.1 gtk3 librsvg libsoup3 curl libarchive qt6-tools polkit
+            webkit2gtk-4.1 gtk3 librsvg libsoup3 curl libarchive qt6-tools polkit \
+            libayatana-appindicator yt-dlp ffmpeg
           useradd -m builder
 
       - uses: actions/checkout@v4
